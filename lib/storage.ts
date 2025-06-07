@@ -14,67 +14,117 @@ export interface User {
   name: string
 }
 
+export interface ChatMessage {
+  id: string
+  text: string
+  sender: "user" | "bot"
+  timestamp: number
+}
+
 // Local Storage Functions
 export const storage = {
   // User management
   getCurrentUser: (): User | null => {
     if (typeof window === "undefined") return null
-    const user = localStorage.getItem("mindfulme_current_user")
-    return user ? JSON.parse(user) : null
+    try {
+      const user = localStorage.getItem("mindfulme_current_user")
+      return user ? JSON.parse(user) : null
+    } catch (error) {
+      console.error("Error getting current user:", error)
+      return null
+    }
   },
 
   setCurrentUser: (user: User) => {
     if (typeof window === "undefined") return
-    localStorage.setItem("mindfulme_current_user", JSON.stringify(user))
+    try {
+      localStorage.setItem("mindfulme_current_user", JSON.stringify(user))
+    } catch (error) {
+      console.error("Error setting current user:", error)
+    }
   },
 
   clearCurrentUser: () => {
     if (typeof window === "undefined") return
-    localStorage.removeItem("mindfulme_current_user")
+    try {
+      localStorage.removeItem("mindfulme_current_user")
+    } catch (error) {
+      console.error("Error clearing current user:", error)
+    }
   },
 
   // Mood entries
   getMoodEntries: (): MoodEntry[] => {
     if (typeof window === "undefined") return []
-    const entries = localStorage.getItem("mindfulme_mood_entries")
-    return entries ? JSON.parse(entries) : []
+    try {
+      const entries = localStorage.getItem("mindfulme_mood_entries")
+      return entries ? JSON.parse(entries) : []
+    } catch (error) {
+      console.error("Error getting mood entries:", error)
+      return []
+    }
   },
 
   addMoodEntry: (entry: Omit<MoodEntry, "id">) => {
     if (typeof window === "undefined") return
-    const entries = storage.getMoodEntries()
-    const newEntry: MoodEntry = {
-      ...entry,
-      id: Date.now().toString(),
+    try {
+      const entries = storage.getMoodEntries()
+      const newEntry: MoodEntry = {
+        ...entry,
+        id: Date.now().toString(),
+      }
+      entries.unshift(newEntry)
+      localStorage.setItem("mindfulme_mood_entries", JSON.stringify(entries))
+      return newEntry
+    } catch (error) {
+      console.error("Error adding mood entry:", error)
     }
-    entries.unshift(newEntry)
-    localStorage.setItem("mindfulme_mood_entries", JSON.stringify(entries))
-    return newEntry
   },
 
   deleteMoodEntry: (id: string) => {
     if (typeof window === "undefined") return
-    const entries = storage.getMoodEntries()
-    const filtered = entries.filter((entry) => entry.id !== id)
-    localStorage.setItem("mindfulme_mood_entries", JSON.stringify(filtered))
+    try {
+      const entries = storage.getMoodEntries()
+      const filtered = entries.filter((entry) => entry.id !== id)
+      localStorage.setItem("mindfulme_mood_entries", JSON.stringify(filtered))
+    } catch (error) {
+      console.error("Error deleting mood entry:", error)
+    }
   },
 
   // Chat history
-  getChatHistory: (): any[] => {
+  getChatHistory: (): ChatMessage[] => {
     if (typeof window === "undefined") return []
-    const history = localStorage.getItem("mindfulme_chat_history")
-    return history ? JSON.parse(history) : []
+    try {
+      const history = localStorage.getItem("mindfulme_chat_history")
+      return history ? JSON.parse(history) : []
+    } catch (error) {
+      console.error("Error getting chat history:", error)
+      return []
+    }
   },
 
-  addChatMessage: (message: any) => {
+  addChatMessage: (message: ChatMessage) => {
     if (typeof window === "undefined") return
-    const history = storage.getChatHistory()
-    history.push(message)
-    localStorage.setItem("mindfulme_chat_history", JSON.stringify(history))
+    try {
+      const history = storage.getChatHistory()
+      history.push(message)
+      // Keep only last 100 messages to prevent storage bloat
+      if (history.length > 100) {
+        history.splice(0, history.length - 100)
+      }
+      localStorage.setItem("mindfulme_chat_history", JSON.stringify(history))
+    } catch (error) {
+      console.error("Error adding chat message:", error)
+    }
   },
 
   clearChatHistory: () => {
     if (typeof window === "undefined") return
-    localStorage.removeItem("mindfulme_chat_history")
+    try {
+      localStorage.removeItem("mindfulme_chat_history")
+    } catch (error) {
+      console.error("Error clearing chat history:", error)
+    }
   },
 }
