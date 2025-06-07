@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -10,6 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useToast } from "@/hooks/use-toast"
 import { Heart, Brain, Sparkles } from "lucide-react"
 import { storage } from "@/lib/storage"
+
+// Demo account credentials - keep consistent
+const DEMO_EMAIL = "email@demo.com"
+const DEMO_PASSWORD = "password123"
 
 export default function LoginForm() {
   const [isLogin, setIsLogin] = useState(true)
@@ -20,9 +24,40 @@ export default function LoginForm() {
   const router = useRouter()
   const { toast } = useToast()
 
-  // Demo account credentials
-  const DEMO_EMAIL = "email@demo.com"
-  const DEMO_PASSWORD = "password123"
+  // Ensure demo account exists in localStorage on component mount
+  useEffect(() => {
+    // Create demo user if it doesn't exist
+    try {
+      const users = JSON.parse(localStorage.getItem("mindfulme_users") || "[]")
+      const demoUserExists = users.some((u: any) => u.email === DEMO_EMAIL)
+
+      if (!demoUserExists) {
+        console.log("Creating demo user in localStorage")
+        const demoUser = {
+          id: "demo-user",
+          email: DEMO_EMAIL,
+          password: DEMO_PASSWORD,
+          name: "Demo User",
+          profilePhoto: "",
+          createdAt: new Date().toISOString(),
+        }
+        users.push(demoUser)
+        localStorage.setItem("mindfulme_users", JSON.stringify(users))
+      }
+    } catch (error) {
+      console.error("Error ensuring demo user exists:", error)
+      // Create fresh users array with demo user
+      const demoUser = {
+        id: "demo-user",
+        email: DEMO_EMAIL,
+        password: DEMO_PASSWORD,
+        name: "Demo User",
+        profilePhoto: "",
+        createdAt: new Date().toISOString(),
+      }
+      localStorage.setItem("mindfulme_users", JSON.stringify([demoUser]))
+    }
+  }, [])
 
   const handleDemoLogin = () => {
     setEmail(DEMO_EMAIL)
@@ -35,14 +70,26 @@ export default function LoginForm() {
     setLoading(true)
 
     try {
-      if (typeof window === "undefined") return
+      console.log(`Attempting ${isLogin ? "login" : "signup"} for email: ${email}`)
 
-      // Check for demo account
+      // Validate input
+      if (!email.trim() || !password.trim()) {
+        throw new Error("Please fill in all required fields")
+      }
+
+      if (!isLogin && !name.trim()) {
+        throw new Error("Please enter your name")
+      }
+
+      // DIRECT DEMO ACCOUNT HANDLING
+      // Special case for demo account - always works
       if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        console.log("Demo account login detected")
         const demoUser = {
           id: "demo-user",
           email: DEMO_EMAIL,
           name: "Demo User",
+          profilePhoto: "",
         }
         storage.setCurrentUser(demoUser)
         toast({
@@ -53,103 +100,90 @@ export default function LoginForm() {
         return
       }
 
-      // Try Firebase auth first
+      // LOCAL STORAGE AUTHENTICATION
+      // Get users from localStorage with error handling
+      let users = []
       try {
-        const { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } = await import(
-          "firebase/auth"
-        )
-        const { auth } = await import("@/lib/firebase")
-
-        if (auth) {
-          let userCredential
-          if (isLogin) {
-            userCredential = await signInWithEmailAndPassword(auth, email, password)
-          } else {
-            userCredential = await createUserWithEmailAndPassword(auth, email, password)
-            // Update the user's display name
-            if (name.trim()) {
-              await updateProfile(userCredential.user, { displayName: name.trim() })
-            }
-          }
-
-          // Save to local storage for faster future loads
-          const user = userCredential.user
-          storage.setCurrentUser({
-            id: user.uid,
-            email: user.email || "",
-            name: user.displayName || name || "User",
-          })
-
-          toast({
-            title: "Success!",
-            description: isLogin ? "Logged in successfully" : "Account created successfully",
-          })
-
-          router.push("/dashboard")
-          return
+        const usersData = localStorage.getItem("mindfulme_users")
+        if (usersData) {
+          users = JSON.parse(usersData)
+          console.log(`Found ${users.length} users in localStorage`)
+        } else {
+          console.log("No users found in localStorage")
         }
-      } catch (firebaseError: any) {
-        console.log("Firebase auth failed:", firebaseError.message)
-
-        // If it's a Firebase auth error, show it to the user
-        if (firebaseError.code) {
-          let errorMessage = "Authentication failed"
-
-          switch (firebaseError.code) {
-            case "auth/user-not-found":
-            case "auth/wrong-password":
-            case "auth/invalid-credential":
-              errorMessage = "Invalid email or password"
-              break
-            case "auth/email-already-in-use":
-              errorMessage = "Email is already registered"
-              break
-            case "auth/weak-password":
-              errorMessage = "Password should be at least 6 characters"
-              break
-            case "auth/invalid-email":
-              errorMessage = "Invalid email address"
-              break
-          }
-
-          throw new Error(errorMessage)
-        }
+      } catch (error) {
+        console.error("Error reading users from localStorage:", error)
+        users = []
       }
 
-      // Fallback to local storage authentication
-      const users = JSON.parse(localStorage.getItem("mindfulme_users") || "[]")
-
+      // Handle login or signup
       if (isLogin) {
-        const user = users.find((u: any) => u.email === email && u.password === password)
+        // LOGIN MODE
+        console.log("Checking login credentials against local users")
+
+        // Debug: Log all users (without passwords)
+        console.log(
+          "Available users:",
+          users.map((u: any) => ({
+            id: u.id,
+            email: u.email,
+            name: u.name,
+          })),
+        )
+
+        // Find matching user
+        const user = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase() && u.password === password)
+
         if (user) {
-          storage.setCurrentUser(user)
+          console.log("Login successful for:", user.email)
+
+          // Create a clean user object without password
+          const { password: _, ...cleanUser } = user
+
+          storage.setCurrentUser(cleanUser)
           toast({
             title: "Welcome back!",
-            description: "Logged in successfully with local account",
+            description: "Logged in successfully",
           })
           router.push("/dashboard")
         } else {
+          console.log("No matching user found for login")
           throw new Error("Invalid email or password")
         }
       } else {
-        const existingUser = users.find((u: any) => u.email === email)
+        // SIGNUP MODE
+        console.log("Creating new user account")
+
+        // Check if email already exists
+        const existingUser = users.find((u: any) => u.email?.toLowerCase() === email.toLowerCase())
+
         if (existingUser) {
           throw new Error("Email is already registered")
         }
 
+        // Validate password
         if (password.length < 6) {
           throw new Error("Password should be at least 6 characters")
         }
 
+        // Create new user
         const newUser = {
           id: Date.now().toString(),
-          email,
-          password,
+          email: email.toLowerCase(),
+          password: password,
           name: name.trim() || "User",
+          profilePhoto: "",
+          createdAt: new Date().toISOString(),
         }
+
+        // Add to users array
         users.push(newUser)
         localStorage.setItem("mindfulme_users", JSON.stringify(users))
-        storage.setCurrentUser(newUser)
+        console.log("New user created:", newUser.email)
+
+        // Store user without password
+        const { password: _, ...cleanUser } = newUser
+        storage.setCurrentUser(cleanUser)
 
         toast({
           title: "Welcome!",
@@ -158,9 +192,10 @@ export default function LoginForm() {
         router.push("/dashboard")
       }
     } catch (error: any) {
+      console.error("Authentication error:", error)
       toast({
         title: "Error",
-        description: error.message || "Something went wrong",
+        description: error.message || "Something went wrong. Please try again.",
         variant: "destructive",
       })
     } finally {

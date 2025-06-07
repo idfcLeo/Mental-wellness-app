@@ -68,12 +68,15 @@ export default function AccountPage() {
         profilePhoto,
       }
 
-      // Update Firebase if available
+      storage.setCurrentUser(updatedUser)
+
+      // Try to update Firebase if available (but don't block)
       try {
-        const { updateProfile } = await import("firebase/auth")
-        const { auth } = await import("@/lib/firebase")
+        const { getFirebaseAuth } = await import("@/lib/firebase")
+        const auth = await getFirebaseAuth()
 
         if (auth?.currentUser) {
+          const { updateProfile } = await import("firebase/auth")
           await updateProfile(auth.currentUser, {
             displayName: updatedUser.name,
             photoURL: profilePhoto || null,
@@ -81,13 +84,10 @@ export default function AccountPage() {
           console.log("Firebase profile updated successfully")
         }
       } catch (firebaseError) {
-        console.log("Firebase profile update failed:", firebaseError)
+        console.log("Firebase profile update failed, saved locally only")
       }
 
-      // Always update local storage
-      storage.setCurrentUser(updatedUser)
       setUser(updatedUser)
-
       toast({
         title: "Profile updated",
         description: "Your profile has been saved successfully.",
@@ -108,12 +108,13 @@ export default function AccountPage() {
     if (!user || deleteConfirmText !== "DELETE") return
 
     try {
-      // Delete from Firebase if available
+      // Try to delete from Firebase if available
       try {
-        const { deleteUser } = await import("firebase/auth")
-        const { auth } = await import("@/lib/firebase")
+        const { getFirebaseAuth } = await import("@/lib/firebase")
+        const auth = await getFirebaseAuth()
 
         if (auth?.currentUser) {
+          const { deleteUser } = await import("firebase/auth")
           await deleteUser(auth.currentUser)
         }
       } catch (firebaseError) {
@@ -125,7 +126,6 @@ export default function AccountPage() {
       localStorage.removeItem("mindfulme_mood_entries")
       localStorage.removeItem("mindfulme_chat_history")
 
-      // Remove from local users list
       const users = JSON.parse(localStorage.getItem("mindfulme_users") || "[]")
       const filteredUsers = users.filter((u: any) => u.id !== user.id)
       localStorage.setItem("mindfulme_users", JSON.stringify(filteredUsers))

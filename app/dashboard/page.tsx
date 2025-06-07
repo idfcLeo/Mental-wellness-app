@@ -24,9 +24,13 @@ export default function DashboardPage() {
         return
       }
 
-      // Check if Firebase user has updated info
+      setUser(currentUser)
+
+      // Try to sync with Firebase if available (but don't block)
       try {
-        const { auth } = await import("@/lib/firebase")
+        const { getFirebaseAuth } = await import("@/lib/firebase")
+        const auth = await getFirebaseAuth()
+
         if (auth?.currentUser) {
           const firebaseUser = auth.currentUser
           const updatedUser = {
@@ -35,19 +39,13 @@ export default function DashboardPage() {
             profilePhoto: firebaseUser.photoURL || currentUser.profilePhoto || "",
           }
 
-          // Update local storage if Firebase has newer info
           if (updatedUser.name !== currentUser.name || updatedUser.profilePhoto !== currentUser.profilePhoto) {
             storage.setCurrentUser(updatedUser)
             setUser(updatedUser)
-          } else {
-            setUser(currentUser)
           }
-        } else {
-          setUser(currentUser)
         }
       } catch (error) {
-        console.log("Firebase check failed, using local user")
-        setUser(currentUser)
+        console.log("Firebase sync failed, using local user data")
       }
 
       setLoading(false)
@@ -58,30 +56,27 @@ export default function DashboardPage() {
 
   const handleLogout = async () => {
     try {
-      // Try to sign out from Firebase if available
+      // Try Firebase signout if available
       try {
-        const { signOut } = await import("firebase/auth")
-        const { auth } = await import("@/lib/firebase")
+        const { getFirebaseAuth } = await import("@/lib/firebase")
+        const auth = await getFirebaseAuth()
 
         if (auth) {
+          const { signOut } = await import("firebase/auth")
           await signOut(auth)
         }
       } catch (firebaseError) {
         console.log("Firebase signout failed, continuing with local logout")
       }
 
-      // Clear local storage
       storage.clearCurrentUser()
-
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",
       })
-
       router.push("/")
     } catch (error) {
       console.error("Logout error:", error)
-      // Force logout even if there's an error
       storage.clearCurrentUser()
       router.push("/")
     }

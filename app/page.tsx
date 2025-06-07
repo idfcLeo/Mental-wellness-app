@@ -12,31 +12,56 @@ export default function HomePage() {
   const router = useRouter()
 
   useEffect(() => {
+    let mounted = true
+    let authUnsubscribe: (() => void) | null = null
+
     const checkAuth = async () => {
       try {
-        // Always start with loading
-        setLoading(true)
+        console.log("HomePage: Starting auth check")
 
-        // Check local storage first
+        // Check local storage first for immediate response
         const localUser = storage.getCurrentUser()
-
-        if (localUser) {
-          // User found in local storage, redirect to dashboard
+        if (localUser && mounted) {
+          console.log("HomePage: Found local user, redirecting to dashboard")
           setIsAuthenticated(true)
           router.push("/dashboard")
           return
         }
 
-        // Check Firebase auth if available
-        if (typeof window !== "undefined") {
-          try {
-            const { onAuthStateChanged } = await import("firebase/auth")
-            const { auth } = await import("@/lib/firebase")
+        console.log("HomePage: No local user found, checking Firebase...")
 
-            if (auth) {
-              const unsubscribe = onAuthStateChanged(auth, (user) => {
+        // Set a reasonable timeout for Firebase check
+        const firebaseTimeout = setTimeout(() => {
+          if (mounted && loading) {
+            console.log("HomePage: Firebase check timeout, showing login")
+            setIsAuthenticated(false)
+            setLoading(false)
+          }
+        }, 3000)
+
+        // Try Firebase auth (completely non-blocking)
+        try {
+          const { getFirebaseAuth, getFirebaseStatus } = await import("@/lib/firebase")
+
+          // Log Firebase status for debugging
+          const status = getFirebaseStatus()
+          console.log("HomePage: Firebase status:", status)
+
+          const auth = await getFirebaseAuth()
+
+          if (auth && mounted) {
+            console.log("HomePage: Firebase auth available, setting up listener")
+            const { onAuthStateChanged } = await import("firebase/auth")
+
+            authUnsubscribe = onAuthStateChanged(
+              auth,
+              (user) => {
+                if (!mounted) return
+
+                console.log("HomePage: Auth state changed:", user ? "logged in" : "logged out")
+                clearTimeout(firebaseTimeout)
+
                 if (user) {
-                  // Save Firebase user to local storage
                   const userData = {
                     id: user.uid,
                     email: user.email || "",
@@ -47,39 +72,57 @@ export default function HomePage() {
                   setIsAuthenticated(true)
                   router.push("/dashboard")
                 } else {
-                  // No user found, show login
                   setIsAuthenticated(false)
                   setLoading(false)
                 }
-              })
-
-              // Cleanup subscription
-              return () => unsubscribe()
-            } else {
-              // Firebase not available, show login
+              },
+              (error) => {
+                console.error("HomePage: Auth state change error:", error)
+                clearTimeout(firebaseTimeout)
+                if (mounted) {
+                  setIsAuthenticated(false)
+                  setLoading(false)
+                }
+              },
+            )
+          } else {
+            // Firebase not available or failed to initialize
+            console.log("HomePage: Firebase auth not available, using local storage only")
+            clearTimeout(firebaseTimeout)
+            if (mounted) {
               setIsAuthenticated(false)
               setLoading(false)
             }
-          } catch (firebaseError) {
-            console.log("Firebase auth check failed:", firebaseError)
+          }
+        } catch (firebaseError) {
+          console.log("HomePage: Firebase auth check failed:", firebaseError)
+          clearTimeout(firebaseTimeout)
+          if (mounted) {
             setIsAuthenticated(false)
             setLoading(false)
           }
-        } else {
+        }
+      } catch (error) {
+        console.error("HomePage: Auth check error:", error)
+        if (mounted) {
           setIsAuthenticated(false)
           setLoading(false)
         }
-      } catch (error) {
-        console.error("Auth check error:", error)
-        setIsAuthenticated(false)
-        setLoading(false)
       }
     }
 
     checkAuth()
+
+    // Cleanup function
+    return () => {
+      console.log("HomePage: Cleaning up")
+      mounted = false
+      if (authUnsubscribe) {
+        authUnsubscribe()
+      }
+    }
   }, [router])
 
-  // Force show login page if not authenticated
   if (loading) {
     return <LoadingSpinner />
   }
