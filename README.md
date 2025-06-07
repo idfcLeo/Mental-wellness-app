@@ -75,28 +75,6 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
 - **AI**: OpenAI GPT-4
 - **Icons**: Lucide React
 
-## Project Structure
-
-\`\`\`
-mental-wellness-app/
-├── app/                    # Next.js app directory
-│   ├── page.tsx           # Home/Login page
-│   ├── dashboard/         # Main dashboard
-│   ├── chatbot/          # AI chat interface
-│   ├── journal/          # Mood journal
-│   └── api/              # API routes
-├── components/            # React components
-│   ├── ui/               # shadcn/ui components
-│   ├── login-form.tsx    # Authentication
-│   ├── mood-tracker.tsx  # Mood selection
-│   └── suggestion-cards.tsx # Recommendations
-├── lib/                  # Utilities
-│   ├── firebase.ts       # Firebase config
-│   ├── storage.ts        # Local storage utils
-│   └── utils.ts          # General utilities
-└── hooks/                # Custom React hooks
-\`\`\`
-
 ## Features Overview
 
 ### 🎭 Mood Tracking
