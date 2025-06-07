@@ -12,6 +12,7 @@ export interface User {
   id: string
   email: string
   name: string
+  profilePhoto?: string
 }
 
 export interface ChatMessage {
@@ -39,6 +40,14 @@ export const storage = {
     if (typeof window === "undefined") return
     try {
       localStorage.setItem("mindfulme_current_user", JSON.stringify(user))
+
+      // Also update in users list if it exists
+      const users = JSON.parse(localStorage.getItem("mindfulme_users") || "[]")
+      const userIndex = users.findIndex((u: User) => u.id === user.id)
+      if (userIndex >= 0) {
+        users[userIndex] = user
+        localStorage.setItem("mindfulme_users", JSON.stringify(users))
+      }
     } catch (error) {
       console.error("Error setting current user:", error)
     }

@@ -60,23 +60,23 @@ export default function MoodTracker() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       {/* Mood Selection */}
-      <div className="space-y-3">
+      <div className="space-y-2 sm:space-y-3">
         <label className="text-sm font-medium text-gray-700">Select your current mood:</label>
-        <div className="grid grid-cols-4 gap-3">
+        <div className="grid grid-cols-4 gap-2 sm:gap-3">
           {moods.map((mood) => (
             <button
               key={mood.value}
               type="button"
               onClick={() => setSelectedMood(mood.value)}
-              className={`p-4 rounded-lg border-2 transition-all hover:scale-105 ${
+              className={`p-2 sm:p-4 rounded-lg border-2 transition-all hover:scale-105 ${
                 selectedMood === mood.value
                   ? "border-purple-500 bg-purple-50 shadow-md"
                   : "border-gray-200 bg-white hover:border-gray-300"
               }`}
             >
-              <div className="text-2xl mb-1">{mood.emoji}</div>
+              <div className="text-lg sm:text-2xl mb-1">{mood.emoji}</div>
               <div className="text-xs text-gray-600">{mood.label}</div>
             </button>
           ))}

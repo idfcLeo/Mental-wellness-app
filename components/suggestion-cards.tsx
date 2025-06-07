@@ -53,29 +53,29 @@ export default function SuggestionCards() {
   }
 
   return (
-    <div className="grid md:grid-cols-3 gap-6">
+    <div className="grid gap-4 sm:gap-6 md:grid-cols-3">
       {suggestions.map((category) => {
         const IconComponent = category.icon
         return (
           <Card key={category.type} className="bg-white/50 border-0 shadow-md">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center space-x-2 text-lg">
-                <div className={`p-2 rounded-lg ${category.color}`}>
-                  <IconComponent className="h-5 w-5" />
+            <CardHeader className="pb-2 sm:pb-3">
+              <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
+                <div className={`p-1.5 sm:p-2 rounded-lg ${category.color}`}>
+                  <IconComponent className="h-4 w-4 sm:h-5 sm:w-5" />
                 </div>
                 <span>{category.title}</span>
               </CardTitle>
-              <CardDescription className="text-sm">{category.description}</CardDescription>
+              <CardDescription className="text-xs sm:text-sm">{category.description}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
+            <CardContent className="space-y-1 sm:space-y-2">
               {category.items.map((item, index) => (
                 <Button
                   key={index}
                   variant="ghost"
-                  className="w-full justify-between text-left h-auto p-3 hover:bg-white/80"
+                  className="w-full justify-between text-left h-auto p-2 sm:p-3 hover:bg-white/80 text-xs sm:text-sm"
                   onClick={() => handleItemClick(item.url, item.name)}
                 >
-                  <span className="text-sm">{item.name}</span>
+                  <span>{item.name}</span>
                   {item.url !== "#" && <ExternalLink className="h-3 w-3" />}
                 </Button>
               ))}
