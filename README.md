@@ -2,6 +2,7 @@
 
 A comprehensive mental wellness application built with Next.js, featuring mood tracking, AI chatbot support, and personalized wellness recommendations.
 
+[link](https://mentalwellness.vercel.app/)
 ## Features
 
 - 🎭 **Mood Tracking** - Track daily emotions with intuitive emoticons
@@ -14,6 +15,9 @@ A comprehensive mental wellness application built with Next.js, featuring mood t
 - 📊 **Analytics** - Mood patterns and insights
 
 ## Getting Started
+![image](https://github.com/user-attachments/assets/0cf8d186-12f2-4cfc-98f5-5e80704ca09a)
+![image](https://github.com/user-attachments/assets/ce4007d0-b9ee-439c-998f-a7748916c7f5)
+
 
 ### Prerequisites
 
@@ -142,4 +146,4 @@ This project is licensed under the MIT License.
 
 ## Support
 
-For support, please open an issue on GitHub or contact the development team.
+Please open an issue on GitHub or contact the development team for support.
