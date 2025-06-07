@@ -15,8 +15,11 @@ A comprehensive mental wellness application built with Next.js, featuring mood t
 - 📊 **Analytics** - Mood patterns and insights
 
 ## Getting Started
-![image](https://github.com/user-attachments/assets/0cf8d186-12f2-4cfc-98f5-5e80704ca09a)
 ![image](https://github.com/user-attachments/assets/ce4007d0-b9ee-439c-998f-a7748916c7f5)
+![image](https://github.com/user-attachments/assets/0cf8d186-12f2-4cfc-98f5-5e80704ca09a)
+![image](https://github.com/user-attachments/assets/d5e868bf-c638-475b-9805-9c0887d21a19)
+![image](https://github.com/user-attachments/assets/dfc75f2c-bce9-4fee-9958-b00fc57f752c)
+![image](https://github.com/user-attachments/assets/41314001-5689-46be-9351-6b155986feca)
 
 
 ### Prerequisites
