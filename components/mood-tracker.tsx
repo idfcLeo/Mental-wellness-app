@@ -27,7 +27,14 @@ export default function MoodTracker() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!selectedMood) return
+    if (!selectedMood) {
+      toast({
+        title: "Please select a mood",
+        description: "Choose how you're feeling before submitting.",
+        variant: "destructive",
+      })
+      return
+    }
 
     setLoading(true)
 
@@ -39,16 +46,21 @@ export default function MoodTracker() {
         date: new Date().toISOString().split("T")[0],
       }
 
-      storage.addMoodEntry(entry)
+      const savedEntry = storage.addMoodEntry(entry)
 
-      toast({
-        title: "Mood tracked!",
-        description: "Your mood has been recorded successfully.",
-      })
+      if (savedEntry) {
+        toast({
+          title: "Mood tracked! 🎉",
+          description: "Your mood has been recorded successfully.",
+        })
 
-      setSelectedMood("")
-      setNote("")
+        setSelectedMood("")
+        setNote("")
+      } else {
+        throw new Error("Failed to save entry")
+      }
     } catch (error) {
+      console.error("Mood tracking error:", error)
       toast({
         title: "Error",
         description: "Failed to save mood entry. Please try again.",
@@ -95,7 +107,9 @@ export default function MoodTracker() {
           value={note}
           onChange={(e) => setNote(e.target.value)}
           className="bg-white/50"
+          maxLength={500}
         />
+        <p className="text-xs text-gray-500">{note.length}/500 characters</p>
       </div>
 
       {/* Submit Button */}

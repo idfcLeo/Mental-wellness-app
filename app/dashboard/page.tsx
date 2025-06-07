@@ -17,13 +17,43 @@ export default function DashboardPage() {
   const { toast } = useToast()
 
   useEffect(() => {
-    const currentUser = storage.getCurrentUser()
-    if (!currentUser) {
-      router.push("/")
-      return
+    const checkAuth = async () => {
+      const currentUser = storage.getCurrentUser()
+      if (!currentUser) {
+        router.push("/")
+        return
+      }
+
+      // Check if Firebase user has updated info
+      try {
+        const { auth } = await import("@/lib/firebase")
+        if (auth?.currentUser) {
+          const firebaseUser = auth.currentUser
+          const updatedUser = {
+            ...currentUser,
+            name: firebaseUser.displayName || currentUser.name,
+            profilePhoto: firebaseUser.photoURL || currentUser.profilePhoto || "",
+          }
+
+          // Update local storage if Firebase has newer info
+          if (updatedUser.name !== currentUser.name || updatedUser.profilePhoto !== currentUser.profilePhoto) {
+            storage.setCurrentUser(updatedUser)
+            setUser(updatedUser)
+          } else {
+            setUser(currentUser)
+          }
+        } else {
+          setUser(currentUser)
+        }
+      } catch (error) {
+        console.log("Firebase check failed, using local user")
+        setUser(currentUser)
+      }
+
+      setLoading(false)
     }
-    setUser(currentUser)
-    setLoading(false)
+
+    checkAuth()
   }, [router])
 
   const handleLogout = async () => {

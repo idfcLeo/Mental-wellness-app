@@ -78,12 +78,13 @@ export default function AccountPage() {
             displayName: updatedUser.name,
             photoURL: profilePhoto || null,
           })
+          console.log("Firebase profile updated successfully")
         }
       } catch (firebaseError) {
-        console.log("Firebase profile update failed, updating locally only")
+        console.log("Firebase profile update failed:", firebaseError)
       }
 
-      // Update local storage
+      // Always update local storage
       storage.setCurrentUser(updatedUser)
       setUser(updatedUser)
 
@@ -92,6 +93,7 @@ export default function AccountPage() {
         description: "Your profile has been saved successfully.",
       })
     } catch (error) {
+      console.error("Profile update error:", error)
       toast({
         title: "Error",
         description: "Failed to update profile. Please try again.",

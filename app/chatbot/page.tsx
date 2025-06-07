@@ -57,58 +57,138 @@ export default function ChatbotPage() {
   const generateBotResponse = (userMessage: string): string => {
     const lowerMessage = userMessage.toLowerCase()
 
+    // Greeting responses
+    if (lowerMessage.includes("hello") || lowerMessage.includes("hi") || lowerMessage.includes("hey")) {
+      const greetings = [
+        "Hello! It's great to hear from you. How are you feeling today?",
+        "Hi there! I'm here to support you. What's on your mind?",
+        "Hey! Thanks for reaching out. How can I help you today?",
+      ]
+      return greetings[Math.floor(Math.random() * greetings.length)]
+    }
+
+    // How are you responses
+    if (lowerMessage.includes("how are you") || lowerMessage.includes("how do you feel")) {
+      return "Thank you for asking! As an AI, I don't have feelings, but I'm here and ready to support you. How are you doing today?"
+    }
+
     // Emotional support responses
-    if (lowerMessage.includes("sad") || lowerMessage.includes("depressed") || lowerMessage.includes("down")) {
+    if (
+      lowerMessage.includes("sad") ||
+      lowerMessage.includes("depressed") ||
+      lowerMessage.includes("down") ||
+      lowerMessage.includes("upset")
+    ) {
       const responses = [
-        "I hear that you're feeling sad. It's completely normal to have these feelings. Would you like to talk about what's making you feel this way?",
-        "I'm sorry you're going through a difficult time. Remember that it's okay to feel sad - these emotions are valid. What usually helps you feel a bit better?",
-        "Thank you for sharing how you're feeling. Sadness can be overwhelming, but you're not alone. Have you tried any breathing exercises or listening to calming music today?",
+        "I hear that you're feeling sad, and I want you to know that your feelings are completely valid. It takes courage to share this. What's been weighing on your heart lately?",
+        "I'm sorry you're going through a difficult time. Sadness is a natural human emotion, and it's okay to feel this way. Would you like to talk about what's contributing to these feelings?",
+        "Thank you for trusting me with how you're feeling. When we're sad, it can feel overwhelming. Have you been able to do any small things that usually bring you comfort?",
       ]
       return responses[Math.floor(Math.random() * responses.length)]
     }
 
-    if (lowerMessage.includes("anxious") || lowerMessage.includes("worried") || lowerMessage.includes("stress")) {
+    if (
+      lowerMessage.includes("anxious") ||
+      lowerMessage.includes("worried") ||
+      lowerMessage.includes("stress") ||
+      lowerMessage.includes("panic")
+    ) {
       const responses = [
-        "Anxiety can feel overwhelming. Let's try to ground ourselves. Can you name 5 things you can see around you right now?",
-        "I understand you're feeling anxious. Try taking slow, deep breaths. Breathe in for 4 counts, hold for 4, then exhale for 4. Would you like me to guide you through this?",
-        "Stress and worry are natural responses. What's one small thing you could do right now to take care of yourself?",
+        "Anxiety can feel really overwhelming. Let's try to ground ourselves together. Can you tell me 5 things you can see around you right now? This can help bring you back to the present moment.",
+        "I understand you're feeling anxious. That's a very common experience. Try taking slow, deep breaths with me - breathe in for 4 counts, hold for 4, then exhale for 4. What's been causing you the most worry lately?",
+        "Stress and anxiety are your mind's way of trying to protect you, but they can be exhausting. What's one small thing you could do right now to take care of yourself?",
       ]
       return responses[Math.floor(Math.random() * responses.length)]
     }
 
-    if (lowerMessage.includes("happy") || lowerMessage.includes("good") || lowerMessage.includes("great")) {
+    if (
+      lowerMessage.includes("happy") ||
+      lowerMessage.includes("good") ||
+      lowerMessage.includes("great") ||
+      lowerMessage.includes("excited") ||
+      lowerMessage.includes("joy")
+    ) {
       const responses = [
-        "That's wonderful to hear! I'm so glad you're feeling good. What's contributing to your positive mood today?",
-        "It makes me happy to know you're doing well! Would you like to share what's bringing you joy?",
-        "That's fantastic! Celebrating the good moments is so important for our mental health.",
+        "That's wonderful to hear! I'm so glad you're feeling good. What's been bringing you joy today? It's important to celebrate these positive moments.",
+        "It makes me happy to know you're doing well! Would you like to share what's contributing to your positive mood? Sometimes talking about good things helps them last longer.",
+        "That's fantastic! Your happiness is contagious, even through text. What's been the highlight of your day?",
       ]
       return responses[Math.floor(Math.random() * responses.length)]
     }
 
-    if (lowerMessage.includes("angry") || lowerMessage.includes("frustrated") || lowerMessage.includes("mad")) {
+    if (
+      lowerMessage.includes("angry") ||
+      lowerMessage.includes("frustrated") ||
+      lowerMessage.includes("mad") ||
+      lowerMessage.includes("furious")
+    ) {
       const responses = [
-        "I can sense your frustration. Anger is a valid emotion. What's causing these feelings right now?",
-        "It sounds like you're dealing with some difficult emotions. Would it help to talk through what's making you angry?",
-        "Anger can be intense. Sometimes it helps to take a step back and breathe. What triggered these feelings?",
+        "I can sense your frustration, and anger is a completely valid emotion. It often tells us that something important to us has been affected. What's been triggering these feelings?",
+        "It sounds like you're dealing with some intense emotions right now. Anger can be really draining. Would it help to talk through what's making you feel this way?",
+        "Feeling angry is natural, and it's okay to experience this emotion. Sometimes anger is our way of protecting ourselves. What situation has been bothering you?",
       ]
       return responses[Math.floor(Math.random() * responses.length)]
     }
 
-    if (lowerMessage.includes("help") || lowerMessage.includes("support")) {
-      return "I'm here to support you. While I can provide emotional support and coping strategies, please remember that if you're having thoughts of self-harm, it's important to reach out to a mental health professional or crisis hotline immediately. What kind of support are you looking for today?"
+    if (
+      lowerMessage.includes("tired") ||
+      lowerMessage.includes("exhausted") ||
+      lowerMessage.includes("sleep") ||
+      lowerMessage.includes("fatigue")
+    ) {
+      const responses = [
+        "Being tired can affect everything - our mood, our thinking, our ability to cope. Have you been getting enough rest lately? Sometimes our bodies are telling us we need to slow down.",
+        "Exhaustion is tough, both physically and emotionally. Are you having trouble sleeping, or have you been pushing yourself too hard? Your rest is important for your wellbeing.",
+        "Feeling tired can make everything else feel harder. What's your sleep routine like? Sometimes small changes can make a big difference in how rested we feel.",
+      ]
+      return responses[Math.floor(Math.random() * responses.length)]
     }
 
-    if (lowerMessage.includes("sleep") || lowerMessage.includes("tired")) {
-      return "Sleep is so important for our mental health. Are you having trouble sleeping? Some things that might help include creating a bedtime routine, avoiding screens before bed, or trying some relaxation techniques."
+    if (lowerMessage.includes("lonely") || lowerMessage.includes("alone") || lowerMessage.includes("isolated")) {
+      const responses = [
+        "Loneliness can be really painful, and I want you to know that reaching out here shows strength. You're not as alone as you might feel right now. What's been making you feel most isolated?",
+        "Feeling lonely is one of the hardest emotions to bear. Thank you for sharing this with me. Even though I'm an AI, I want you to know that your feelings matter and you deserve connection.",
+        "I hear that you're feeling alone. That takes courage to admit. Sometimes loneliness comes even when we're around people. What kind of connection are you missing most?",
+      ]
+      return responses[Math.floor(Math.random() * responses.length)]
+    }
+
+    if (lowerMessage.includes("help") || lowerMessage.includes("support") || lowerMessage.includes("crisis")) {
+      return "I'm here to support you, and I'm glad you reached out. While I can provide emotional support and coping strategies, please remember that if you're having thoughts of self-harm or are in crisis, it's important to reach out to a mental health professional, crisis hotline, or emergency services immediately. What kind of support are you looking for today?"
+    }
+
+    if (lowerMessage.includes("thank") || lowerMessage.includes("thanks")) {
+      const responses = [
+        "You're very welcome! It means a lot to me that I could help, even in a small way. How are you feeling now?",
+        "I'm so glad I could be here for you. Thank you for trusting me with your thoughts and feelings.",
+        "You don't need to thank me - this is what I'm here for. I'm honored that you shared with me today.",
+      ]
+      return responses[Math.floor(Math.random() * responses.length)]
+    }
+
+    // Question responses
+    if (
+      lowerMessage.includes("what") ||
+      lowerMessage.includes("how") ||
+      lowerMessage.includes("why") ||
+      lowerMessage.includes("?")
+    ) {
+      const responses = [
+        "That's a thoughtful question. What are your own thoughts about this? Sometimes talking through our own ideas can be really helpful.",
+        "I appreciate you asking. What's been on your mind about this topic? I'd love to hear your perspective.",
+        "That's something worth exploring. What feelings come up for you when you think about this?",
+      ]
+      return responses[Math.floor(Math.random() * responses.length)]
     }
 
     // Default supportive responses
     const defaultResponses = [
-      "Thank you for sharing that with me. How does talking about this make you feel?",
-      "I'm listening. Can you tell me more about what you're experiencing?",
-      "That sounds important to you. What thoughts come up when you think about this?",
-      "I appreciate you opening up. What would be most helpful for you right now?",
-      "It takes courage to share your feelings. What support do you need in this moment?",
+      "Thank you for sharing that with me. It sounds like there's a lot on your mind. How does it feel to talk about this?",
+      "I'm listening and I hear you. Can you tell me more about what you're experiencing right now?",
+      "That sounds important to you. What emotions are coming up as you think about this?",
+      "I appreciate you opening up. What would be most helpful for you in this moment?",
+      "It takes courage to share your thoughts and feelings. What support do you need right now?",
+      "I'm here with you. What's the most challenging part of what you're going through?",
     ]
 
     return defaultResponses[Math.floor(Math.random() * defaultResponses.length)]
@@ -143,8 +223,8 @@ export default function ChatbotPage() {
         storage.addChatMessage(botResponse)
         setIsTyping(false)
       },
-      1000 + Math.random() * 2000,
-    ) // 1-3 second delay
+      1500 + Math.random() * 2000,
+    ) // 1.5-3.5 second delay
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {

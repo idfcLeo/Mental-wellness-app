@@ -8,25 +8,26 @@ import { storage } from "@/lib/storage"
 
 export default function HomePage() {
   const [loading, setLoading] = useState(true)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    const initAuth = async () => {
+    const checkAuth = async () => {
       try {
-        // Set a timeout to ensure loading doesn't get stuck
-        const timeoutId = setTimeout(() => {
-          setLoading(false)
-        }, 3000) // 3 second timeout
+        // Always start with loading
+        setLoading(true)
 
-        // Check local storage first (faster)
+        // Check local storage first
         const localUser = storage.getCurrentUser()
+
         if (localUser) {
-          clearTimeout(timeoutId)
+          // User found in local storage, redirect to dashboard
+          setIsAuthenticated(true)
           router.push("/dashboard")
           return
         }
 
-        // Only try Firebase if we're on the client and have config
+        // Check Firebase auth if available
         if (typeof window !== "undefined") {
           try {
             const { onAuthStateChanged } = await import("firebase/auth")
@@ -34,49 +35,56 @@ export default function HomePage() {
 
             if (auth) {
               const unsubscribe = onAuthStateChanged(auth, (user) => {
-                clearTimeout(timeoutId)
                 if (user) {
-                  // Save to local storage for faster future loads
-                  storage.setCurrentUser({
+                  // Save Firebase user to local storage
+                  const userData = {
                     id: user.uid,
                     email: user.email || "",
                     name: user.displayName || "User",
-                  })
+                    profilePhoto: user.photoURL || "",
+                  }
+                  storage.setCurrentUser(userData)
+                  setIsAuthenticated(true)
                   router.push("/dashboard")
                 } else {
+                  // No user found, show login
+                  setIsAuthenticated(false)
                   setLoading(false)
                 }
               })
 
-              // Cleanup function
-              return () => {
-                clearTimeout(timeoutId)
-                unsubscribe()
-              }
+              // Cleanup subscription
+              return () => unsubscribe()
             } else {
-              // Firebase not available, proceed to login
-              clearTimeout(timeoutId)
+              // Firebase not available, show login
+              setIsAuthenticated(false)
               setLoading(false)
             }
           } catch (firebaseError) {
             console.log("Firebase auth check failed:", firebaseError)
-            clearTimeout(timeoutId)
+            setIsAuthenticated(false)
             setLoading(false)
           }
         } else {
-          clearTimeout(timeoutId)
+          setIsAuthenticated(false)
           setLoading(false)
         }
       } catch (error) {
-        console.error("Auth initialization error:", error)
+        console.error("Auth check error:", error)
+        setIsAuthenticated(false)
         setLoading(false)
       }
     }
 
-    initAuth()
+    checkAuth()
   }, [router])
 
+  // Force show login page if not authenticated
   if (loading) {
+    return <LoadingSpinner />
+  }
+
+  if (isAuthenticated) {
     return <LoadingSpinner />
   }
 
