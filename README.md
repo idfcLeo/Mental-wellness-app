@@ -2,7 +2,7 @@
 
 A comprehensive mental wellness application built with Next.js, featuring mood tracking, AI chatbot support, and personalized wellness recommendations.
 
-[link](https://mentalwellness.vercel.app/)
+[MindfullMe app link](https://mentalwellness.vercel.app/)
 ## Features
 
 - 🎭 **Mood Tracking** - Track daily emotions with intuitive emoticons
