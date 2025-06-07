@@ -37,13 +37,14 @@ const hasValidFirebaseConfig = () => {
   const config = getFirebaseConfig()
   const required = ["apiKey", "authDomain", "projectId", "appId"]
 
-  for (const key of required) {
-    if (!config[key as keyof typeof config]) {
-      console.log(`Missing required Firebase config: ${key}`)
-      return false
-    }
+  const missingKeys = required.filter((key) => !config[key as keyof typeof config])
+
+  if (missingKeys.length > 0) {
+    console.log(`Firebase: Missing required config keys: ${missingKeys.join(", ")}`)
+    return false
   }
 
+  console.log("Firebase: Configuration is valid")
   return true
 }
 
@@ -70,13 +71,24 @@ const initializeFirebase = async (): Promise<boolean> => {
   // Skip if already initializing
   if (isInitializing) {
     console.log("Firebase: Already initializing")
-    return false
+    return initPromise || Promise.resolve(false)
   }
 
   isInitializing = true
   console.log("Firebase: Starting initialization...")
 
   try {
+    // Log Firebase config for debugging (without exposing sensitive data)
+    const config = getFirebaseConfig()
+    console.log("Firebase config status:", {
+      hasApiKey: !!config.apiKey,
+      hasAuthDomain: !!config.authDomain,
+      hasProjectId: !!config.projectId,
+      hasStorageBucket: !!config.storageBucket,
+      hasMessagingSenderId: !!config.messagingSenderId,
+      hasAppId: !!config.appId,
+    })
+
     // Import Firebase modules with individual error handling
     let firebaseApp_module, firebaseAuth_module, firebaseFirestore_module
 
@@ -105,15 +117,18 @@ const initializeFirebase = async (): Promise<boolean> => {
     }
 
     // Initialize Firebase App
-    const config = getFirebaseConfig()
-
     try {
-      if (firebaseApp_module.getApps().length === 0) {
+      // Check if Firebase is already initialized
+      const apps = firebaseApp_module.getApps()
+      console.log("Firebase: Existing apps count:", apps.length)
+
+      if (apps.length === 0) {
+        console.log("Firebase: Initializing new app with config")
         firebaseApp = firebaseApp_module.initializeApp(config)
-        console.log("Firebase: New app initialized")
+        console.log("Firebase: New app initialized successfully")
       } else {
-        firebaseApp = firebaseApp_module.getApp()
         console.log("Firebase: Using existing app")
+        firebaseApp = firebaseApp_module.getApp()
       }
     } catch (appError) {
       console.error("Firebase: App initialization failed:", appError)
@@ -121,19 +136,22 @@ const initializeFirebase = async (): Promise<boolean> => {
     }
 
     // Wait for app to be ready
-    await new Promise((resolve) => setTimeout(resolve, 300))
+    await new Promise((resolve) => setTimeout(resolve, 500))
 
     let servicesInitialized = 0
 
     // Initialize Auth (optional)
     if (firebaseAuth_module && firebaseApp) {
       try {
+        console.log("Firebase: Initializing Auth service")
         firebaseAuth = firebaseAuth_module.getAuth(firebaseApp)
+        console.log("Firebase: Auth service initialized")
 
         // Set persistence with error handling
         try {
+          console.log("Firebase: Setting auth persistence")
           await firebaseAuth_module.setPersistence(firebaseAuth, firebaseAuth_module.browserLocalPersistence)
-          console.log("Firebase: Auth initialized with persistence")
+          console.log("Firebase: Auth persistence set successfully")
           servicesInitialized++
         } catch (persistenceError) {
           console.warn("Firebase: Auth persistence failed, but auth still available:", persistenceError)
@@ -148,8 +166,9 @@ const initializeFirebase = async (): Promise<boolean> => {
     // Initialize Firestore (optional)
     if (firebaseFirestore_module && firebaseApp) {
       try {
+        console.log("Firebase: Initializing Firestore service")
         firebaseDb = firebaseFirestore_module.getFirestore(firebaseApp)
-        console.log("Firebase: Firestore initialized")
+        console.log("Firebase: Firestore service initialized")
         servicesInitialized++
       } catch (dbError) {
         console.warn("Firebase: Firestore initialization failed:", dbError)
@@ -185,6 +204,7 @@ export const getFirebaseAuth = async (): Promise<any> => {
   try {
     // Return immediately if already initialized and available
     if (isInitialized && firebaseAuth) {
+      console.log("Firebase Auth: Already initialized and available")
       return firebaseAuth
     }
 
@@ -196,16 +216,20 @@ export const getFirebaseAuth = async (): Promise<any> => {
 
     // Initialize if not already doing so
     if (!initPromise) {
+      console.log("Firebase Auth: Starting initialization")
       initPromise = initializeFirebase()
+    } else {
+      console.log("Firebase Auth: Initialization already in progress")
     }
 
     const success = await initPromise
+    console.log("Firebase Auth: Initialization result:", success)
 
     if (success && firebaseAuth) {
       console.log("Firebase Auth: Available and ready")
       return firebaseAuth
     } else {
-      console.log("Firebase Auth: Not available, using local storage")
+      console.log("Firebase Auth: Not available after initialization attempt")
       return null
     }
   } catch (error) {

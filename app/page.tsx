@@ -47,11 +47,24 @@ export default function HomePage() {
           const status = getFirebaseStatus()
           console.log("HomePage: Firebase status:", status)
 
+          if (!status.hasValidConfig) {
+            console.log("HomePage: Firebase config is invalid, showing login form")
+            clearTimeout(firebaseTimeout)
+            if (mounted) {
+              setIsAuthenticated(false)
+              setLoading(false)
+            }
+            return
+          }
+
           const auth = await getFirebaseAuth()
 
           if (auth && mounted) {
             console.log("HomePage: Firebase auth available, setting up listener")
             const { onAuthStateChanged } = await import("firebase/auth")
+
+            // Log current auth state
+            console.log("HomePage: Current auth state:", auth.currentUser ? "logged in" : "logged out")
 
             authUnsubscribe = onAuthStateChanged(
               auth,
@@ -62,6 +75,7 @@ export default function HomePage() {
                 clearTimeout(firebaseTimeout)
 
                 if (user) {
+                  console.log("HomePage: Firebase user found:", user.email)
                   const userData = {
                     id: user.uid,
                     email: user.email || "",
@@ -72,6 +86,7 @@ export default function HomePage() {
                   setIsAuthenticated(true)
                   router.push("/dashboard")
                 } else {
+                  console.log("HomePage: No Firebase user, showing login form")
                   setIsAuthenticated(false)
                   setLoading(false)
                 }

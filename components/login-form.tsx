@@ -100,7 +100,104 @@ export default function LoginForm() {
         return
       }
 
-      // LOCAL STORAGE AUTHENTICATION
+      // FIREBASE AUTHENTICATION - Try first
+      try {
+        console.log("Attempting Firebase authentication...")
+
+        // Import Firebase modules
+        const { getFirebaseAuth, getFirebaseStatus } = await import("@/lib/firebase")
+
+        // Log Firebase status for debugging
+        const status = getFirebaseStatus()
+        console.log("Firebase status:", status)
+
+        if (!status.hasValidConfig) {
+          console.log("Firebase config is invalid or missing, falling back to local auth")
+          throw new Error("Firebase configuration not available")
+        }
+
+        // Get Firebase auth instance
+        const auth = await getFirebaseAuth()
+
+        if (!auth) {
+          console.log("Firebase auth service not available, falling back to local auth")
+          throw new Error("Firebase auth service not available")
+        }
+
+        console.log("Firebase auth service ready, proceeding with authentication")
+
+        // Import Firebase auth methods
+        const { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } = await import(
+          "firebase/auth"
+        )
+
+        let userCredential
+        if (isLogin) {
+          console.log("Attempting Firebase sign in...")
+          userCredential = await signInWithEmailAndPassword(auth, email, password)
+          console.log("Firebase sign in successful!")
+        } else {
+          console.log("Attempting Firebase account creation...")
+          userCredential = await createUserWithEmailAndPassword(auth, email, password)
+          console.log("Firebase account created!")
+
+          if (name.trim()) {
+            console.log("Updating Firebase profile with display name...")
+            await updateProfile(userCredential.user, { displayName: name.trim() })
+            console.log("Firebase profile updated!")
+          }
+        }
+
+        // Successfully authenticated with Firebase
+        const user = userCredential.user
+        console.log("Firebase authentication successful for:", user.email)
+
+        // Store user in local storage
+        storage.setCurrentUser({
+          id: user.uid,
+          email: user.email || "",
+          name: user.displayName || name || "User",
+          profilePhoto: user.photoURL || "",
+        })
+
+        toast({
+          title: "Success!",
+          description: isLogin ? "Logged in successfully" : "Account created successfully",
+        })
+        router.push("/dashboard")
+        return
+      } catch (firebaseError: any) {
+        console.error("Firebase auth failed:", firebaseError)
+
+        // Handle specific Firebase errors
+        if (firebaseError.code) {
+          switch (firebaseError.code) {
+            case "auth/user-not-found":
+            case "auth/wrong-password":
+            case "auth/invalid-credential":
+              console.log("Firebase auth failed with invalid credentials, trying local storage")
+              break
+            case "auth/email-already-in-use":
+              throw new Error("Email is already registered")
+            case "auth/weak-password":
+              throw new Error("Password should be at least 6 characters")
+            case "auth/invalid-email":
+              throw new Error("Invalid email address")
+            case "auth/too-many-requests":
+              throw new Error("Too many failed attempts. Please try again later.")
+            default:
+              console.log("Firebase error, falling back to local storage:", firebaseError.code)
+          }
+        } else {
+          console.log("Firebase auth failed without error code, falling back to local storage")
+        }
+
+        // Continue to local storage authentication as fallback
+      }
+
+      // LOCAL STORAGE AUTHENTICATION (Fallback)
+      console.log("Using local storage authentication as fallback")
+
       // Get users from localStorage with error handling
       let users = []
       try {
