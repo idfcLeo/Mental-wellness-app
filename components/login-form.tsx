@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
 import { Heart, Brain, Sparkles } from "lucide-react"
+import { storage } from "@/lib/storage"
 
 export default function LoginForm() {
   const [isLogin, setIsLogin] = useState(true)
@@ -19,6 +20,16 @@ export default function LoginForm() {
   const router = useRouter()
   const { toast } = useToast()
 
+  // Demo account credentials
+  const DEMO_EMAIL = "email@demo.com"
+  const DEMO_PASSWORD = "password123"
+
+  const handleDemoLogin = () => {
+    setEmail(DEMO_EMAIL)
+    setPassword(DEMO_PASSWORD)
+    setIsLogin(true)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -26,17 +37,48 @@ export default function LoginForm() {
     try {
       if (typeof window === "undefined") return
 
+      // Check for demo account
+      if (email === DEMO_EMAIL && password === DEMO_PASSWORD) {
+        const demoUser = {
+          id: "demo-user",
+          email: DEMO_EMAIL,
+          name: "Demo User",
+        }
+        storage.setCurrentUser(demoUser)
+        toast({
+          title: "Welcome to the demo!",
+          description: "You're now logged in with the demo account.",
+        })
+        router.push("/dashboard")
+        return
+      }
+
       // Try Firebase auth first
       try {
-        const { signInWithEmailAndPassword, createUserWithEmailAndPassword } = await import("firebase/auth")
+        const { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } = await import(
+          "firebase/auth"
+        )
         const { auth } = await import("@/lib/firebase")
 
         if (auth) {
+          let userCredential
           if (isLogin) {
-            await signInWithEmailAndPassword(auth, email, password)
+            userCredential = await signInWithEmailAndPassword(auth, email, password)
           } else {
-            await createUserWithEmailAndPassword(auth, email, password)
+            userCredential = await createUserWithEmailAndPassword(auth, email, password)
+            // Update the user's display name
+            if (name.trim()) {
+              await updateProfile(userCredential.user, { displayName: name.trim() })
+            }
           }
+
+          // Save to local storage for faster future loads
+          const user = userCredential.user
+          storage.setCurrentUser({
+            id: user.uid,
+            email: user.email || "",
+            name: user.displayName || name || "User",
+          })
 
           toast({
             title: "Success!",
@@ -46,35 +88,68 @@ export default function LoginForm() {
           router.push("/dashboard")
           return
         }
-      } catch (firebaseError) {
-        console.log("Firebase auth failed, using local storage fallback")
+      } catch (firebaseError: any) {
+        console.log("Firebase auth failed:", firebaseError.message)
+
+        // If it's a Firebase auth error, show it to the user
+        if (firebaseError.code) {
+          let errorMessage = "Authentication failed"
+
+          switch (firebaseError.code) {
+            case "auth/user-not-found":
+            case "auth/wrong-password":
+            case "auth/invalid-credential":
+              errorMessage = "Invalid email or password"
+              break
+            case "auth/email-already-in-use":
+              errorMessage = "Email is already registered"
+              break
+            case "auth/weak-password":
+              errorMessage = "Password should be at least 6 characters"
+              break
+            case "auth/invalid-email":
+              errorMessage = "Invalid email address"
+              break
+          }
+
+          throw new Error(errorMessage)
+        }
       }
 
-      // Fallback to local storage
+      // Fallback to local storage authentication
       const users = JSON.parse(localStorage.getItem("mindfulme_users") || "[]")
 
       if (isLogin) {
         const user = users.find((u: any) => u.email === email && u.password === password)
         if (user) {
-          localStorage.setItem("mindfulme_current_user", JSON.stringify(user))
+          storage.setCurrentUser(user)
           toast({
             title: "Welcome back!",
-            description: "Logged in successfully",
+            description: "Logged in successfully with local account",
           })
           router.push("/dashboard")
         } else {
-          throw new Error("Invalid credentials")
+          throw new Error("Invalid email or password")
         }
       } else {
         const existingUser = users.find((u: any) => u.email === email)
         if (existingUser) {
-          throw new Error("User already exists")
+          throw new Error("Email is already registered")
         }
 
-        const newUser = { id: Date.now().toString(), email, password, name }
+        if (password.length < 6) {
+          throw new Error("Password should be at least 6 characters")
+        }
+
+        const newUser = {
+          id: Date.now().toString(),
+          email,
+          password,
+          name: name.trim() || "User",
+        }
         users.push(newUser)
         localStorage.setItem("mindfulme_users", JSON.stringify(users))
-        localStorage.setItem("mindfulme_current_user", JSON.stringify(newUser))
+        storage.setCurrentUser(newUser)
 
         toast({
           title: "Welcome!",
@@ -177,20 +252,36 @@ export default function LoginForm() {
               </Button>
             </form>
 
+            {/* Demo Account Button */}
+            <div className="mt-4">
+              <Button type="button" variant="outline" className="w-full" onClick={handleDemoLogin} disabled={loading}>
+                Try Demo Account
+              </Button>
+            </div>
+
             <div className="mt-6 text-center">
               <button
                 type="button"
-                onClick={() => setIsLogin(!isLogin)}
+                onClick={() => {
+                  setIsLogin(!isLogin)
+                  setEmail("")
+                  setPassword("")
+                  setName("")
+                }}
                 className="text-sm text-purple-600 hover:text-purple-700 underline"
               >
                 {isLogin ? "Don't have an account? Sign up" : "Already have an account? Sign in"}
               </button>
             </div>
 
-            {/* Demo Account */}
+            {/* Demo Account Info */}
             <div className="mt-4 p-3 bg-blue-50 rounded-lg">
               <p className="text-xs text-blue-700 text-center">
-                <strong>Demo:</strong> email@demo.com / password123
+                <strong>Demo Account:</strong>
+                <br />
+                Email: {DEMO_EMAIL}
+                <br />
+                Password: {DEMO_PASSWORD}
               </p>
             </div>
           </CardContent>
