@@ -2,7 +2,7 @@
 
 A comprehensive mental wellness application built with Next.js, featuring mood tracking, AI chatbot support, and personalized wellness recommendations.
 
-## Getting Started
+<h2>Getting Started</h2> 
 ![image](https://github.com/user-attachments/assets/ce4007d0-b9ee-439c-998f-a7748916c7f5)
 ![image](https://github.com/user-attachments/assets/0cf8d186-12f2-4cfc-98f5-5e80704ca09a)
 ![image](https://github.com/user-attachments/assets/d5e868bf-c638-475b-9805-9c0887d21a19)
