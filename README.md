@@ -1,4 +1,4 @@
-# MindfulMe - Mental Wellness App
+MindfulMe - Mental Wellness App
 
 A comprehensive mental wellness application built with Next.js, featuring mood tracking, AI chatbot support, and personalized wellness recommendations.
 
